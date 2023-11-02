@@ -5,8 +5,9 @@ from tempfile import NamedTemporaryFile
 import torch
 from TTS.api import TTS
 from playsound import playsound
+import os
 import openai
-openai.api_key = "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"
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
