@@ -6,8 +6,7 @@ import torch
 from TTS.api import TTS
 from playsound import playsound
 import os
-import openai
-openai.api_key = os.getenv("OPENAI_API_KEY")
+from gptfuncs import *
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -53,14 +52,9 @@ def main():
     while True:
         text = get_phrase()
         print("Sending to GPT")
-        completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "user", "content": text}
-            ]
-        )
+        completion = Chat(text)
         print("Speaking")
-        talk(completion.choices[0].message.content)
+        talk(completion)
 
 
 if __name__ == "__main__":
