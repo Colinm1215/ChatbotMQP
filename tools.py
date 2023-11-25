@@ -79,7 +79,7 @@ def create_and_store_embeddings(text, chroma_store): #dont use this function, wi
         embedding = openai_embeddings.embed(chunk)
         chroma_store.insert(embedding, chunk)
 
-def update_config(file_path, key, new_value):
+def update_config(file_path, key, new_value): #not being used right now
     updated_lines = []
     key_found = False
 
@@ -119,9 +119,7 @@ def reset_gompai():
             config.advanced_reasoning = False
             config.userID = "999" #for testing 999
             config.vectordb_path = "chromadb"
-            #config.runsetup = True
-            update_config('config.py', 'runsetup', 'False')
-                #config.openai_api_key = "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" #put the API key
+                #config.openai_api_key = "" #put the API key
             shutil.rmtree("./")
             print("All settings in config reset, vector db deleted, re run program to initialize db again")
         print("Command not recognized, please try again with y/n")
