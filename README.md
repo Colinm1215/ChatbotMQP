@@ -29,6 +29,7 @@ Install necessary dependencies.
 Configure config.py with appropriate settings and API key.  
 
 # TO-DO:
+Do some kind of proprocessing to text being sent to database (remove whitespace and unicode, maybe use nlp to chunk into semantic ideas)
 Integrate other modules of the project  
 Integrate a dynamic user system.  
 Improve event handling, context awaress, and response generation.  
