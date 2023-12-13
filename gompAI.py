@@ -79,12 +79,15 @@ try:
         print("'chromadb' directory not found. Initializing...")
         memory.initialize_db()
     while True:
-        user_input = input("You: ")
-        if user_input.lower() in ["quit", "exit"]:
-            break
+        if config.enableSTT:
+            user_input = tools.get_phrase()
+        else:
+            user_input = input("You: ")
+            if user_input.lower() in ["quit", "exit"]:
+                break
         response = get_chatbot_response(user_input)
         print("Bot:", response)
-        if (config.enableTTS):
+        if config.enableTTS:
             tools.elevenlabs(response)  # Convert the response to speech funct for now
 except KeyboardInterrupt:
     print("\nConversation ended.")
