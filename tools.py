@@ -1,3 +1,5 @@
+import shutil
+
 from icalendar import Calendar
 from datetime import datetime
 from bs4 import BeautifulSoup
@@ -10,9 +12,49 @@ from elevenlabs import generate, play, set_api_key
 import config
 import requests
 import pyttsx3
+from TTS.api import TTS
+import torch
+import elevenlabs
+from playsound import playsound
+import io
+import speech_recognition as sr
+import whisper
+from tempfile import NamedTemporaryFile
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 if (config.enableTTS):
+    tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC").to(device)
     set_api_key(config.tts_api_key)
+
+recorder = sr.Recognizer()
+recorder.energy_threshold = 2500
+recorder.dynamic_energy_threshold = False
+source = sr.Microphone(sample_rate=16000)
+audio_model = whisper.load_model("medium.en")
+temp_file = NamedTemporaryFile().name
+
+with source:
+    recorder.adjust_for_ambient_noise(source)
+
+def get_phrase():
+    print("Listening")
+    with source:
+        audio_data = recorder.listen(source)
+
+    wav_data = io.BytesIO(audio_data.get_wav_data())
+
+    with open(temp_file, 'w+b') as f:
+        f.write(wav_data.read())
+
+    result = audio_model.transcribe(temp_file, fp16=torch.cuda.is_available())
+    text = result['text'].strip()
+
+    return text
+
+def talk(speech):
+    tts.tts_to_file(text=speech, file_path="./output.wav")
+    playsound('./output.wav')
 
 # Function for converting text to speech using pyttsx3
 def text_to_speech(text, lang='en'):
@@ -20,6 +62,7 @@ def text_to_speech(text, lang='en'):
     engine.setProperty('rate', 200)
     engine.say(text)
     engine.runAndWait()
+
 
 def elevenlabs(text):
     audio = generate(
@@ -74,10 +117,10 @@ def chunk_text_from_txt(txtpath, chunk_size, overlap):  # Ada 2's optimal chunk 
 #openai_embeddings = OpenAIEmbeddings(openai_api_key = config.openai_api_key)
 #chroma_client = Chroma(embedding_function=openai_embeddings, persist_directory = config.vectordb_path)
 
-def create_and_store_embeddings(text, chroma_store): #dont use this function, will be replaced
-    for chunk in text:
-        embedding = openai_embeddings.embed(chunk)
-        chroma_store.insert(embedding, chunk)
+#def create_and_store_embeddings(text, chroma_store): #dont use this function, will be replaced
+    #for chunk in text:
+       # embedding = openai_embeddings.embed(chunk)
+       #  chroma_store.insert(embedding, chunk)
 
 def update_config(file_path, key, new_value): #not being used right now
     updated_lines = []
