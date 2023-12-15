@@ -87,8 +87,9 @@ try:
                 break
         response = get_chatbot_response(user_input)
         print("Bot:", response)
-        if config.enableTTS:
-            tools.elevenlabs(response)  # Convert the response to speech funct for now
+        #if config.enableTTS:
+        #    tools.elevenlabs(response)  # Convert the response to speech funct for no
+        tools.talk(response)
 except KeyboardInterrupt:
     print("\nConversation ended.")
 
