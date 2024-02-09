@@ -10,4 +10,4 @@ advanced_reasoning = False
 userID = "999" #for testing 999 but we need to implement a user system
 vectordb_path = "chromadb"
 tts_api_key = "" #optional for elevenlabs
-openai_api_key = "" #put the API key, ive been using my own since profs stopped working
+openai_api_key = "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" #put the API key, ive been using my own since profs stopped working
