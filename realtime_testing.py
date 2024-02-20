@@ -1,3 +1,5 @@
+import time
+
 import cv2
 from deepface import DeepFace
 import os
@@ -5,6 +7,8 @@ import warnings
 import pandas as pd
 import threading
 import queue
+
+import config
 
 warnings.filterwarnings('ignore')
 
@@ -41,7 +45,9 @@ class FaceRecognizer(threading.Thread):
         return "Unknown"
 
     def run(self):
+        last_check_time = time.time()
         cap = cv2.VideoCapture(0, cv2.CAP_ANY)
+        cached_results = None
 
         while self.search:
             ret, frame = cap.read()
@@ -52,29 +58,36 @@ class FaceRecognizer(threading.Thread):
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             faces = self.face_cascade.detectMultiScale(gray, 1.1, 4)
 
-            if len(faces) == 0:
-                self.message_queue.put("Error: No faces found")
-            else:
+            if len(faces) != 0:
                 try:
                     db_path = os.path.abspath(self.images_folder_path)
-                    results = DeepFace.find(frame, db_path=db_path, model_name="VGG-Face", enforce_detection=False)
+                    cur_time = time.time()
+                    if cached_results is None or cur_time - last_check_time >= config.face_check_delay:
+                        last_check_time = time.time()
+                        results = DeepFace.find(frame,
+                                                db_path=db_path,
+                                                model_name="VGG-Face",
+                                                enforce_detection=False,
+                                                silent=True)
+                        cached_results = results
 
-                    if results:
+                    if cached_results:
                         for (x, y, w, h) in faces:
                             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
-                            for result_df in results:
+                            for result_df in cached_results:
                                 if isinstance(result_df, pd.DataFrame) and not result_df.empty:
                                     for index, row in result_df.iterrows():
                                         identity = row['identity']
                                         recognized_face = os.path.basename(identity)
                                         if recognized_face != self.last_recognized_face:
-                                            self.message_queue.put(f"Recognized: {recognized_face}")
+                                            self.message_queue.put(f"{recognized_face.split('.', 1)[0]}")
                                             self.last_recognized_face = recognized_face
                                             break
 
                 except Exception as e:
-                    self.message_queue.put(f"Error: {e}")
+                    continue
+                    #self.message_queue.put(f"Error: {e}")
 
             cv2.imshow('Webcam', frame)
 
@@ -83,6 +96,7 @@ class FaceRecognizer(threading.Thread):
 
         cap.release()
         cv2.destroyAllWindows()
+
 
 # Usage example
 if __name__ == "__main__":
@@ -96,7 +110,7 @@ if __name__ == "__main__":
         while True:
             if not message_queue.empty():
                 message = message_queue.get()
-                print(message)
+                #print(message)
             # Include other operations here
     except KeyboardInterrupt:
         face_recognizer.search = False

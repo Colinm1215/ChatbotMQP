@@ -70,16 +70,17 @@ event_prompt = ChatPromptTemplate.from_messages([
 
 
 # Function to process user input and generate a response
-def get_chatbot_response(human_input):
+def get_chatbot_response(human_input, face_id):
+    mod_human_input = f"{face_id} says {human_input}"
     if "events" in human_input.lower() or "what's happening" in human_input.lower():  # This is a very basic way of adding dynamic interactions, with more processing power we could use NLP to enhance this tremendously; im working on an "advanced reasoning" mode for this.
         # Use cached events to generate a response
         # This can be a simple string formatting based on the events data
         chat_llm_chain.prompt = event_prompt
-        response = chat_llm_chain.predict(human_input=human_input)
+        response = chat_llm_chain.predict(human_input=mod_human_input)
         chat_llm_chain.prompt = prompt  # Reverting to default prompt, this might not be the best way to do this
     else:
         # Normal chatbot response
-        response = chat_llm_chain.predict(human_input=human_input)
+        response = chat_llm_chain.predict(human_input=mod_human_input)
     return response
 
 
@@ -96,21 +97,24 @@ try:
     while True:
         if not message_queue.empty():
             message = message_queue.get()
-            if face_id_found != message:
+            if face_id_found != message and face_id_found != "Error: No faces found":
                 face_id_found = message
-                print(face_id_found)
-        continue
-        if config.enableSTT:
-            user_input = tools.get_phrase()
-        else:
-            user_input = input("You: ")
-            if user_input.lower() in ["quit", "exit"]:
-                break
-        response = get_chatbot_response(user_input)
-        print("Bot:", response)
-        # if config.enableTTS:
-        #    tools.elevenlabs(response)  # Convert the response to speech funct for no
-        tools.talk(response)
+        print(f"face_id_found : {face_id_found}")
+        if face_id_found != "" and face_id_found != "Error: No faces found":
+            if config.enableSTT:
+                user_input = tools.get_phrase()
+            else:
+                user_input = input("You: ")
+                if user_input.lower() in ["quit", "exit"]:
+                    break
+
+            print(f"User Input : {user_input}")
+            if user_input != "" or user_input is not None:
+                response = get_chatbot_response(user_input, face_id_found)
+                print("Bot:", response)
+                if config.enableTTS:
+                    tools.elevenlabs(response)  # Convert the response to speech funct for no
+
 except KeyboardInterrupt:
     face_recognizer.search = False
     face_recognizer.join()

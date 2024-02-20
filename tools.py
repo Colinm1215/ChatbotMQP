@@ -54,13 +54,11 @@ CHUNK = 1024  # Number of frames per buffer
 # Initialize PyAudio
 audio = pyaudio.PyAudio()
 
-# Open Stream
-stream = audio.open(format=FORMAT, channels=CHANNELS,
-                    rate=RATE, input=True,
-                    frames_per_buffer=CHUNK)
-
 
 def get_phrase():
+    stream = audio.open(format=FORMAT, channels=CHANNELS,
+                        rate=RATE, input=True,
+                        frames_per_buffer=CHUNK)
     text = ""
     frames = []
     recording = False
@@ -112,8 +110,6 @@ def get_phrase():
     # Stop and close the stream
     stream.stop_stream()
     stream.close()
-    # Terminate the PortAudio interface
-    audio.terminate()
     return text
 
 
