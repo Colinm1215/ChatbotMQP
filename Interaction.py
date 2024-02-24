@@ -23,6 +23,7 @@ class Interaction:
     def __init__(self, username):
         self.username = username
         self.running = True
+        self.LLM = gompAI(username)
 
     def get_user_input(self):
         if config.enableSTT:
@@ -40,7 +41,7 @@ class Interaction:
                 break
             print(f"User Input : {user_input}")
             if user_input:
-                response = gompAI.get_chatbot_response(user_input, self.username)
+                response = self.LLM.get_chatbot_response(user_input)
                 if config.enableTTS:
                     tools.elevenlabs(response)  # Convert the response to speech function for now
                 else:
