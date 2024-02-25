@@ -2,7 +2,7 @@ import os
 import queue
 import config
 import tools
-import gompAI
+from gompAI import gompAI
 
 
 # if not self.message_queue.empty():
