@@ -1,5 +1,4 @@
 import time
-
 import cv2
 from deepface import DeepFace
 import os
@@ -8,7 +7,7 @@ import pandas as pd
 import threading
 import queue
 
-import config
+#import config
 
 warnings.filterwarnings('ignore')
 
@@ -44,10 +43,19 @@ class FaceRecognizer(threading.Thread):
                 return self.labels[i]
         return "Unknown"
 
+    def calculate_turn(self, center_x_of_face, center_x_of_frame):
+        steps_per_degree = 10 # placeholder - set in config.py
+        HFOV = 90 # placeholder fov - should also be set in config.py
+        print(center_x_of_face)
+        print(center_x_of_frame)
+        angle = ((center_x_of_face - center_x_of_frame) / center_x_of_frame) * (HFOV / 2)
+        return angle * steps_per_degree
+
     def run(self):
         last_check_time = time.time()
         cap = cv2.VideoCapture(0, cv2.CAP_ANY)
         cached_results = None
+        center_line_x = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) / 2
 
         while self.search:
             ret, frame = cap.read()
@@ -62,7 +70,7 @@ class FaceRecognizer(threading.Thread):
                 try:
                     db_path = os.path.abspath(self.images_folder_path)
                     cur_time = time.time()
-                    if cached_results is None or cur_time - last_check_time >= config.face_check_delay:
+                    if cached_results is None or cur_time - last_check_time >= 10: # config.face_check_delay
                         last_check_time = time.time()
                         results = DeepFace.find(frame,
                                                 db_path=db_path,
@@ -75,13 +83,22 @@ class FaceRecognizer(threading.Thread):
                         for (x, y, w, h) in faces:
                             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
+                            center_x_of_face = x + (h / 2)
+
                             for result_df in cached_results:
                                 if isinstance(result_df, pd.DataFrame) and not result_df.empty:
                                     for index, row in result_df.iterrows():
                                         identity = row['identity']
                                         recognized_face = os.path.basename(identity)
                                         if recognized_face != self.last_recognized_face:
-                                            self.message_queue.put(f"{recognized_face.split('.', 1)[0]}")
+                                            steps = self.calculate_turn(center_x_of_face, center_line_x)
+                                            direction = "none"
+                                            if steps > 0:
+                                                direction = "right"
+                                            elif steps < 0:
+                                                direction = "left"
+                                            steps = abs(steps)
+                                            self.message_queue.put(f"{recognized_face.split('.', 1)[0]},{steps},{direction}")
                                             self.last_recognized_face = recognized_face
                                             break
 
@@ -110,7 +127,7 @@ if __name__ == "__main__":
         while True:
             if not message_queue.empty():
                 message = message_queue.get()
-                #print(message)
+                print(message)
             # Include other operations here
     except KeyboardInterrupt:
         face_recognizer.search = False
