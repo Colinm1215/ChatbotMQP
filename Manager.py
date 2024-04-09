@@ -26,7 +26,8 @@ try:
                 if face_id_found == "Error: No faces found":
                     continue # Add Error Handling
                 elif face_id_found == "Error: User Not Recognized":
-                    continue # Add Error Handling
+                    converstation = Interaction(face_id_found)
+                    converstation.process_messages()
                 else:
                     converstation = Interaction(face_id_found)
                     converstation.process_messages()

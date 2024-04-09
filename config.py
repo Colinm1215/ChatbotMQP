@@ -10,6 +10,7 @@ enableTTS = False
 enableSTT = False
 advanced_reasoning = False
 userID = "999" #for testing 999 but we need to implement a user system
+username = "John"
 vectordb_path = "chromadb"
 tts_api_key = env_val["TTS_API_KEY"] #optional for elevenlabs
 openai_api_key = env_val["OPENAPI_KEY"] #put the API key, ive been using my own since profs stopped working

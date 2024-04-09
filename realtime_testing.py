@@ -46,8 +46,6 @@ class FaceRecognizer(threading.Thread):
     def calculate_turn(self, center_x_of_face, center_x_of_frame):
         steps_per_degree = 10 # placeholder - set in config.py
         HFOV = 90 # placeholder fov - should also be set in config.py
-        print(center_x_of_face)
-        print(center_x_of_frame)
         angle = ((center_x_of_face - center_x_of_frame) / center_x_of_frame) * (HFOV / 2)
         return angle * steps_per_degree
 
