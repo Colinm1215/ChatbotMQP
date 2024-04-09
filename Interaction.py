@@ -29,7 +29,8 @@ class Interaction:
             else:
                 print("Bot:", "Hello! My name is GompAI. I am sorry, but I do not recognize you - what is your name?")
             user_input = self.get_user_input() # figure out some way to strip only the name from user_input - maybe some custom chatGPT prompt or NLP model or even clever Regex
-            db.insert_user(db.generate_new_id(), user_input)
+            self.id = db.generate_new_id()
+            db.insert_user(self.id, user_input)
 
         self.username = db.search_name_by_id(id)
         self.running = True
