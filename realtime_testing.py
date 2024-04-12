@@ -23,7 +23,7 @@ class FaceRecognizer(threading.Thread):
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
         self.last_recognized_face = None
         self.search = True
-        self.cap_left = cv2.VideoCapture(0, cv2.CAP_ANY)
+        self.cap_left = cv2.VideoCapture(2, cv2.CAP_ANY)
         self.cap_right = cv2.VideoCapture(1, cv2.CAP_ANY)
 
     def get_known_faces(self):
@@ -51,9 +51,12 @@ class FaceRecognizer(threading.Thread):
         steps_per_degree = config.steps_per_degree  # placeholder - set in config.py
         HFOV = config.HFOV  # placeholder - should also be set in config.py
         interocular_distance = config.interocular_distance  # placeholder - should also be set in config.py
-        center_x_avg = (center_x_left_camera + center_x_right_camera) / 2
+        center_x_frame_right = int(self.cap_right.get(cv2.CAP_PROP_FRAME_WIDTH)) / 2
+        center_x_frame_left = int(self.cap_left.get(cv2.CAP_PROP_FRAME_WIDTH)) / 2
 
-        angle = ((center_x_avg - center_x_left_camera) / interocular_distance) * (HFOV / 2)
+        center_x_avg = (center_x_left_camera + center_x_right_camera) / 2
+        center_x_frame_avg = (center_x_frame_right + center_x_frame_left) / 2
+        angle = ((center_x_avg - center_x_frame_avg) / interocular_distance) * (HFOV / 2)
 
         return angle * steps_per_degree
 
@@ -120,22 +123,25 @@ class FaceRecognizer(threading.Thread):
                     continue
                     # self.message_queue.put(f"Error: {e}")
 
-            for result_df in cached_results:
-                if isinstance(result_df, pd.DataFrame) and not result_df.empty:
-                    for index, row in result_df.iterrows():
-                        identity = row['identity']
-                        recognized_face = os.path.basename(identity)
-                        if recognized_face != self.last_recognized_face:
-                            steps = self.calculate_turn(center_x_right, center_x_left)
-                            direction = "none"
-                            if steps > 0:
-                                direction = "right"
-                            elif steps < 0:
-                                direction = "left"
-                            steps = abs(steps)
-                            self.message_queue.put(f"{recognized_face.split('.', 1)[0]},{steps},{direction}")
-                            self.last_recognized_face = recognized_face
-                            break
+            if cached_results:
+                steps = self.calculate_turn(center_x_right, center_x_left)
+                print(steps)
+                for result_df in cached_results:
+                    if isinstance(result_df, pd.DataFrame) and not result_df.empty:
+                        for index, row in result_df.iterrows():
+                            identity = row['identity']
+                            recognized_face = os.path.basename(identity)
+                            if recognized_face != self.last_recognized_face:
+                                direction = "none"
+                                if steps > 0:
+                                    direction = "right"
+                                elif steps < 0:
+                                    direction = "left"
+                                steps = abs(steps)
+                                print(f"{recognized_face.split('.', 1)[0]},{steps},{direction}")
+                                self.message_queue.put(f"{recognized_face.split('.', 1)[0]},{steps},{direction}")
+                                self.last_recognized_face = recognized_face
+                                break
 
             cv2.imshow('Left', frame_left)
             cv2.imshow('Right', frame_right)
