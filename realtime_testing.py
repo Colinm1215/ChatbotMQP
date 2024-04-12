@@ -7,6 +7,8 @@ import pandas as pd
 import threading
 import queue
 
+import config
+
 # import config
 
 warnings.filterwarnings('ignore')
@@ -46,9 +48,9 @@ class FaceRecognizer(threading.Thread):
         return "Unknown"
 
     def calculate_turn(self, center_x_left_camera, center_x_right_camera):
-        steps_per_degree = 10  # placeholder - set in config.py
-        HFOV = 90  # placeholder - should also be set in config.py
-        interocular_distance = 130  # placeholder - should also be set in config.py
+        steps_per_degree = config.steps_per_degree  # placeholder - set in config.py
+        HFOV = config.HFOV  # placeholder - should also be set in config.py
+        interocular_distance = config.interocular_distance  # placeholder - should also be set in config.py
         center_x_avg = (center_x_left_camera + center_x_right_camera) / 2
 
         angle = ((center_x_avg - center_x_left_camera) / interocular_distance) * (HFOV / 2)

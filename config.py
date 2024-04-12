@@ -16,3 +16,6 @@ tts_api_key = env_val["TTS_API_KEY"] #optional for elevenlabs
 openai_api_key = env_val["OPENAPI_KEY"] #put the API key, ive been using my own since profs stopped working
 face_check_delay = 10
 enableFaceRecognition = False
+HFOV = 115
+steps_per_degree = 0.55555555555
+interocular_distance = 130
