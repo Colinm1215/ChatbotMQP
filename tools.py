@@ -13,13 +13,24 @@ from TTS.api import TTS
 from elevenlabs import generate, play, set_api_key
 from icalendar import Calendar
 from langchain.document_loaders import PyPDFLoader, TextLoader
-# from langchain.vectorstores.chroma import Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from playsound import playsound
-
 import config
+import sounddevice as sd
+from pydub import AudioSegment
+import tempfile
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+language = 'en'
+model_id = 'v3_en'
+sample_rate = 48000
+speaker = 'random'
+
+tts_model, _ = torch.hub.load(repo_or_dir='snakers4/silero-models',
+                              model='silero_tts',
+                              language=language,
+                              speaker=model_id)
+tts_model.to(device)
 
 if config.enableTTS:
     tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC").to(device)
@@ -114,8 +125,19 @@ def get_phrase():
 
 
 def talk(speech):
-    tts.tts_to_file(text=speech, file_path="./output.wav")
-    playsound('./output.wav')
+    audio = tts_model.apply_tts(text=speech,
+                                speaker=speaker,
+                                sample_rate=sample_rate)
+    audio_np = audio.numpy()
+
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmpfile:
+        tmpfile_name = tmpfile.name
+        tmpfile.close()
+        AudioSegment(data=audio_np.tobytes(), sample_width=2, frame_rate=sample_rate, channels=1).export(
+            tmpfile_name,
+            format="wav")
+        sd.play(audio_np, sample_rate)
+        sd.wait()
 
 
 # Function for converting text to speech using pyttsx3
