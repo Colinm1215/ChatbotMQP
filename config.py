@@ -19,3 +19,4 @@ enableFaceRecognition = False
 HFOV = 115
 steps_per_degree = 0.55555555555
 interocular_distance = 130
+arduino_port = ""

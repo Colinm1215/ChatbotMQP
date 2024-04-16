@@ -17,3 +17,4 @@ opencv-python~=4.8.0.76
 pandas~=1.5.3
 deepface~=0.0.84
 protobuf~=3.20.3
+pyserial~=3.5

@@ -139,7 +139,8 @@ class FaceRecognizer(threading.Thread):
                                     direction = "left"
                                 steps = abs(steps)
                                 print(f"{recognized_face.split('.', 1)[0]},{steps},{direction}")
-                                self.message_queue.put(f"{recognized_face.split('.', 1)[0]},{steps},{direction}")
+                                str = "{" + f"{steps},{direction}" + "}"
+                                self.message_queue.put(f"{recognized_face.split('.', 1)[0]},{str}")
                                 self.last_recognized_face = recognized_face
                                 break
 
