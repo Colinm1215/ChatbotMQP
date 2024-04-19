@@ -18,125 +18,135 @@ import sounddevice as sd
 from pydub import AudioSegment
 import tempfile
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
-language = 'en'
-model_id = 'v3_en'
-sample_rate = 48000
-speaker = 'random'
-
-tts_model, _ = torch.hub.load(repo_or_dir='snakers4/silero-models',
-                              model='silero_tts',
-                              language=language,
-                              speaker=model_id)
-tts_model.to(device)
-
-if config.enableTTS:
-    set_api_key(config.tts_api_key)
-
-stt_model, stt_decoder, stt_utils = torch.hub.load(repo_or_dir='snakers4/silero-models',
-                                                   model='silero_stt',
-                                                   language='en',
-                                                   device=device)
-(read_batch, split_into_batches,
- read_audio_stt, prepare_model_input) = stt_utils
-
-vad_model, vad_utils = torch.hub.load(repo_or_dir='snakers4/silero-vad',
-                                      model='silero_vad',
-                                      force_reload=True,
-                                      onnx=False)
-
-(get_speech_timestamps,
- save_audio,
- read_audio_vad,
- VADIterator,
- collect_chunks) = vad_utils
-
-vad_iterator = VADIterator(vad_model)
-
-# Parameters
-FORMAT = pyaudio.paInt16  # Audio format (16-bit PCM)
-CHANNELS = 1  # Single channel for microphone
-RATE = 16000  # Sampling Rate
-CHUNK = 1024  # Number of frames per buffer
-
-# Initialize PyAudio
-audio = pyaudio.PyAudio()
+device = "cpu"
 
 
-def get_phrase():
-    print("Listening...")
-    stream = audio.open(format=FORMAT, channels=CHANNELS,
-                        rate=RATE, input=True,
-                        frames_per_buffer=CHUNK)
-    text = ""
-    frames = []
-    recording = False
-    last_voice_time = time.time()
-    listening = True
-    while listening:
-        audio_chunk = stream.read(1536)
-        audio_int16 = np.frombuffer(audio_chunk, np.int16)
-        # Following code chunk credited to Alexander Veysov
-        abs_max = np.abs(audio_int16).max()
-        sound = audio_int16.astype('float32')
-        if abs_max > 0:
-            sound *= 1 / 32768
-        audio_float32 = sound.squeeze()  # depends on the use case
-        # End of code chunk
-        conf = vad_model(torch.from_numpy(audio_float32), 16000)
-
-        current_time = time.time()
-        if conf[0][0] > 0.2:
-            recording = True
-            last_voice_time = current_time
-        elif current_time - last_voice_time > 0.5:
-            recording = False
-
-        if recording:
-            frames.append(audio_chunk)
-        else:
-            if len(frames) > 0:
-                print("ATtempting to write to file")
-                wav_file_path = "recorded_audio.wav"  # Define your WAV file name
-                wf = wave.open(wav_file_path, 'wb')
-                wf.setnchannels(CHANNELS)
-                wf.setsampwidth(audio.get_sample_size(FORMAT))
-                wf.setframerate(RATE)
-                wf.writeframes(b''.join(frames))
-                wf.close()
-                print("written to file - transcribing")
-                test_files = glob('recorded_audio.wav')
-                batches = split_into_batches(test_files, batch_size=10)
-                input = prepare_model_input(read_batch(batches[0]),
-                                            device=device)
-
-                output = stt_model(input)
-                for example in output:
-                    text += stt_decoder(example.cpu())
-                frames.clear()
-                listening = False
-
-    # Stop and close the stream
-    stream.stop_stream()
-    stream.close()
-    return text
 
 
-def talk(speech):
-    audio = tts_model.apply_tts(text=speech,
-                                speaker=speaker,
-                                sample_rate=sample_rate)
-    audio_np = audio.numpy()
+class Audible:
 
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmpfile:
-        tmpfile_name = tmpfile.name
-        tmpfile.close()
-        AudioSegment(data=audio_np.tobytes(), sample_width=2, frame_rate=sample_rate, channels=1).export(
-            tmpfile_name,
-            format="wav")
-        sd.play(audio_np, sample_rate)
-        sd.wait()
+    def __init__(self):
+        self.language = 'en'
+        self.model_id = 'v3_en'
+        self.sample_rate = 48000
+        self.speaker = 'random'
+        self.tts_model, _ = torch.hub.load(repo_or_dir='snakers4/silero-models',
+                                      model='silero_tts',
+                                      language=self.language,
+                                      speaker=self.model_id)
+        self.tts_model.to(device)
+
+        if config.enableTTS:
+            set_api_key(config.tts_api_key)
+
+        self.stt_model, self.stt_decoder, self.stt_utils = torch.hub.load(repo_or_dir='snakers4/silero-models',
+                                                           model='silero_stt',
+                                                           language='en',
+                                                           device=device)
+        (self.read_batch, self.split_into_batches,
+         self.read_audio_stt, self.prepare_model_input) = self.stt_utils
+
+        self.vad_model, self.vad_utils = torch.hub.load(repo_or_dir='snakers4/silero-vad',
+                                              model='silero_vad',
+                                              force_reload=True,
+                                              onnx=False)
+
+        (get_speech_timestamps,
+         save_audio,
+         read_audio_vad,
+         VADIterator,
+         collect_chunks) = self.vad_utils
+
+        self.vad_iterator = VADIterator(self.vad_model)
+
+        # Parameters
+        self.FORMAT = pyaudio.paInt16  # Audio format (16-bit PCM)
+        self.CHANNELS = 1  # Single channel for microphone
+        self.RATE = 16000  # Sampling Rate
+        self.CHUNK = 1024  # Number of frames per buffer
+
+        # Initialize PyAudio
+        self.audio = pyaudio.PyAudio()
+    def get_phrase(self):
+        print("Listening...")
+        stream = self.audio.open(format=self.FORMAT, channels=self.CHANNELS,
+                            rate=self.RATE, input=True,
+                            frames_per_buffer=self.CHUNK)
+        text = ""
+        frames = []
+        recording = False
+        last_voice_time = time.time()
+        listening = True
+        while listening:
+            audio_chunk = stream.read(1536)
+            audio_int16 = np.frombuffer(audio_chunk, np.int16)
+            # Following code chunk credited to Alexander Veysov
+            abs_max = np.abs(audio_int16).max()
+            sound = audio_int16.astype('float32')
+            if abs_max > 0:
+                sound *= 1 / 32768
+            audio_float32 = sound.squeeze()  # depends on the use case
+            # End of code chunk
+            conf = self.vad_model(torch.from_numpy(audio_float32), 16000)
+
+            current_time = time.time()
+            if conf[0][0] > 0.2:
+                recording = True
+                last_voice_time = current_time
+            elif current_time - last_voice_time > 0.5:
+                recording = False
+
+            if recording:
+                frames.append(audio_chunk)
+            else:
+                if len(frames) > 0:
+                    print("ATtempting to write to file")
+                    wav_file_path = "recorded_audio.wav"  # Define your WAV file name
+                    wf = wave.open(wav_file_path, 'wb')
+                    wf.setnchannels(self.CHANNELS)
+                    wf.setsampwidth(self.audio.get_sample_size(self.FORMAT))
+                    wf.setframerate(self.RATE)
+                    wf.writeframes(b''.join(frames))
+                    wf.close()
+                    print("written to file - transcribing")
+                    test_files = glob('recorded_audio.wav')
+                    batches = self.split_into_batches(test_files, batch_size=10)
+                    print(batches)
+                    input = self.prepare_model_input(self.read_batch(batches[0]),
+                                                device=device)
+
+                    output = self.stt_model(input)
+                    for example in output:
+                        text += self.stt_decoder(example.cpu())
+                    frames.clear()
+                    listening = False
+
+        # Stop and close the stream
+        stream.stop_stream()
+        stream.close()
+        return text
+
+    def elevenlabs(self, text):
+        audio = generate(
+            text=text,
+            model="eleven_multilingual_v2"
+        )
+        play(audio)
+
+# def talk(speech):
+#     audio = tts_model.apply_tts(text=speech,
+#                                 speaker=speaker,
+#                                 sample_rate=sample_rate)
+#     audio_np = audio.numpy()
+#
+#     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmpfile:
+#         tmpfile_name = tmpfile.name
+#         tmpfile.close()
+#         AudioSegment(data=audio_np.tobytes(), sample_width=2, frame_rate=sample_rate, channels=1).export(
+#             tmpfile_name,
+#             format="wav")
+#         sd.play(audio_np, sample_rate)
+#         sd.wait()
 
 
 # Function for converting text to speech using pyttsx3
@@ -145,14 +155,6 @@ def text_to_speech(text, lang='en'):
     engine.setProperty('rate', 200)
     engine.say(text)
     engine.runAndWait()
-
-
-def elevenlabs(text):
-    audio = generate(
-        text=text,
-        model="eleven_multilingual_v2"
-    )
-    play(audio)
 
 
 # Function to fetch and parse an iCalendar (.ics) file

@@ -3,8 +3,8 @@ import queue
 import sqlite3
 
 import config
-import tools
-from gompAI import gompAI
+from tools import Audible
+from gompAI import gompAI, GompAgent
 import Database as db
 
 
@@ -27,15 +27,16 @@ class Interaction:
         self.id = id
         self.username = name
         self.running = True
-        self.LLM = gompAI(self.username)
+        self.LLM = gompAI(name)
+        self.audio = Audible()
         if config.enableTTS:
-            tools.elevenlabs(f"Hello {self.username}!")
+            self.audio.elevenlabs(f"Hello {self.username}!")
         else:
             print(f"Hello {self.username}")
 
     def get_user_input(self):
         if config.enableSTT:
-            user_input = tools.get_phrase()
+            user_input = self.audio.get_phrase()
         else:
             user_input = input("You: ")
             if user_input.lower() in ["quit", "exit"]:
@@ -51,6 +52,6 @@ class Interaction:
             if user_input:
                 response = self.LLM.get_chatbot_response(user_input)
                 if config.enableTTS:
-                    tools.elevenlabs(response)  # Convert the response to speech function for now
+                    self.audio.elevenlabs(response)  # Convert the response to speech function for now
                 else:
                     print("Bot:", response)

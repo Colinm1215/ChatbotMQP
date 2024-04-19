@@ -46,6 +46,7 @@ try:
         print("'chromadb' directory not found. Initializing...")
         memory.initialize_db()
 
+    audio = tools.Audible()
     if config.enableFaceRecognition:
         face_recognizer.start()
 
@@ -68,13 +69,13 @@ try:
                             continue  # Add Error Handling
                         elif face_id_found == "Error":
                             if config.enableTTS:
-                                tools.elevenlabs(
+                                audio.elevenlabs(
                                     "Hello! My name is GompAI. I am sorry, but I do not recognize you - what is your name?")  # Convert the response to speech function for now
                             else:
                                 print("Bot:",
                                       "Hello! My name is GompAI. I am sorry, but I do not recognize you - what is your name?")
                             if config.enableSTT:
-                                user_input = tools.get_phrase()
+                                user_input = audio.get_phrase()
                             else:
                                 user_input = input("You: ")
                             id = db.generate_new_id()
