@@ -1,0 +1,73 @@
+// define the pins
+#define EN_PIN    7 //enable
+#define STEP_PIN  8 //step
+#define DIR_PIN   9 //direction
+
+void setup()
+{
+  //set pin modes
+  Serial.begin(115200);
+  pinMode(EN_PIN, OUTPUT); // set the EN_PIN as an output
+  digitalWrite(EN_PIN, HIGH); // deactivate driver (LOW active)
+  pinMode(DIR_PIN, OUTPUT); // set the DIR_PIN as an output
+  digitalWrite(DIR_PIN, LOW); // set the direction pin to low
+  pinMode(STEP_PIN, OUTPUT); // set the STEP_PIN as an output
+  digitalWrite(STEP_PIN, LOW); // set the step pin to low
+  digitalWrite(EN_PIN, LOW); // activate driver
+}
+
+// This function sets the number of steps, the direction and the speed
+
+// steps: a full rotation requires 1600 steps
+// direction: 1 = clockwise, 0 = anticlockwise
+// speed: number of microseconds between each step, min 100
+void rotateMotor(int steps, bool direction, int speed) {
+  // Set the motor direction
+  digitalWrite(DIR_PIN, direction);
+
+  // Step the motor
+  for (int i = 0; i < steps; i++) {
+    digitalWrite(STEP_PIN, HIGH);
+    delayMicroseconds(speed);
+    digitalWrite(STEP_PIN, LOW);
+    delayMicroseconds(speed);
+  }
+}
+
+void processMessage(String message) {
+    message.trim();
+    //message = message.substring(1, message.length() - 1);
+    int commaIndex = message.indexOf(',');
+    int leftBracket = message.indexOf('{');
+    int rightBracket = message.indexOf('}');
+    String stepsStr = message.substring(leftBracket+1, commaIndex);
+    char directionStr = message.substring(commaIndex + 1, rightBracket-1)[0];
+    int steps = stepsStr.toInt();
+
+    switch (directionStr) {
+      case 'L':
+        rotateMotor(steps, 0, 500);
+        break;
+      case 'R':
+        rotateMotor(steps, 1, 500);
+        break;
+      default:
+        break;
+    }
+}
+
+String incomingMessage = ""; // Buffer to store incoming message
+
+void loop() {
+  while (Serial.available() > 0) {
+    char incomingChar = Serial.read();
+    if (incomingChar == '{') {
+      incomingMessage = ""; // Clear the buffer when a new message starts
+    } else if (incomingChar == '}') {
+      // End of message reached, process the complete message
+      processMessage(incomingMessage);
+    } else {
+      incomingMessage += incomingChar; // Append character to the message buffer
+    }
+  }
+}
