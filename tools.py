@@ -65,6 +65,7 @@ audio = pyaudio.PyAudio()
 
 
 def get_phrase():
+    print("Listening...")
     stream = audio.open(format=FORMAT, channels=CHANNELS,
                         rate=RATE, input=True,
                         frames_per_buffer=CHUNK)
@@ -149,7 +150,6 @@ def text_to_speech(text, lang='en'):
 def elevenlabs(text):
     audio = generate(
         text=text,
-        voice="Bella",
         model="eleven_multilingual_v2"
     )
     play(audio)
