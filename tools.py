@@ -9,7 +9,6 @@ import pyaudio
 import pyttsx3
 import requests
 import torch
-from TTS.api import TTS
 from elevenlabs import generate, play, set_api_key
 from icalendar import Calendar
 from langchain.document_loaders import PyPDFLoader, TextLoader
@@ -33,7 +32,6 @@ tts_model, _ = torch.hub.load(repo_or_dir='snakers4/silero-models',
 tts_model.to(device)
 
 if config.enableTTS:
-    tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC").to(device)
     set_api_key(config.tts_api_key)
 
 stt_model, stt_decoder, stt_utils = torch.hub.load(repo_or_dir='snakers4/silero-models',

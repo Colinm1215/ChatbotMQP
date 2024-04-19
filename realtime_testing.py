@@ -25,7 +25,7 @@ class FaceRecognizer(threading.Thread):
         self.last_recognized_face = None
         self.search = True
         self.cap_left = cv2.VideoCapture(0, cv2.CAP_ANY)
-        self.cap_right = cv2.VideoCapture(2, cv2.CAP_ANY)
+        self.cap_right = cv2.VideoCapture(1, cv2.CAP_ANY)
 
     def get_known_faces(self):
         """Load known faces and labels from a folder."""

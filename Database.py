@@ -32,14 +32,17 @@ def search_id_by_name(name):
     c = conn.cursor()
     c.execute("SELECT * FROM mytable WHERE name=?", (name,))
     result = c.fetchone()
-    return result
-
+    if result is not None:
+        return result[0]
+    return None
 
 def search_name_by_id(id):
     c = conn.cursor()
     c.execute("SELECT * FROM mytable WHERE id=?", (id,))
     result = c.fetchone()
-    return result
+    if result is not None:
+        return result[1]
+    return None
 
 
 def generate_new_id():
@@ -48,7 +51,6 @@ def generate_new_id():
     max_id = c.fetchone()[0]
     new_id = max_id + 1 if max_id is not None else 1
     return new_id
-
 
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)

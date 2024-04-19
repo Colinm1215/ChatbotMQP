@@ -60,8 +60,8 @@ try:
                     if face_id_found != face_id_in_message and face_id_found != "Error: No faces found":
                         face_id_found = face_id_in_message
 
-                    print(f"face_id_found: {face_id_found}")
-                    print(f"Sending command to motor : {motor_instructions}")
+                    #print(f"face_id_found: {face_id_found}")
+                    #print(f"Sending command to motor : {motor_instructions}")
                     command_motor(motor_instructions)
                     if face_id_found != "" and current_interaction is None:
                         if face_id_found == "Error: No faces found":
