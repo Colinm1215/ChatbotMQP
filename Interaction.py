@@ -1,5 +1,7 @@
 import os
 import queue
+import sqlite3
+
 import config
 import tools
 from gompAI import gompAI
@@ -21,20 +23,15 @@ import Database as db
 # self.message_queue = message_queue
 # self.face_recognizer = face_recognizer_class(images_folder_path, message_queue)
 class Interaction:
-    def __init__(self, id):
+    def __init__(self, id, name):
         self.id = id
-        if self.id == "":
-            if config.enableTTS:
-                tools.elevenlabs("Hello! My name is GompAI. I am sorry, but I do not recognize you - what is your name?")  # Convert the response to speech function for now
-            else:
-                print("Bot:", "Hello! My name is GompAI. I am sorry, but I do not recognize you - what is your name?")
-            user_input = self.get_user_input() # figure out some way to strip only the name from user_input - maybe some custom chatGPT prompt or NLP model or even clever Regex
-            self.id = db.generate_new_id()
-            db.insert_user(self.id, user_input)
-
-        self.username = db.search_name_by_id(id)
+        self.username = name
         self.running = True
         self.LLM = gompAI(self.username)
+        if config.enableTTS:
+            tools.elevenlabs(f"Hello {self.username}!")
+        else:
+            print(f"Hello {self.username}")
 
     def get_user_input(self):
         if config.enableSTT:
